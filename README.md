@@ -6,11 +6,11 @@ This project aims to develop a simple Python-based tool for identifying potentia
 
 The tool will use synthetic journal entry data and rule-based risk indicators, including:
 
--High-value transcations
--Missing descriptions
--Duplicate transactions
--Weekend or late-night postings
--Segregation-of-duties conflicts
+- High-value transcations
+- Missing descriptions
+- Duplicate transactions
+- Weekend or late-night postings
+- Segregation-of-duties conflicts
 
 ## Project Objective
 
@@ -21,7 +21,9 @@ This tool is intended to support, not replace, the professional judgment of audi
 ## Current Status
 
 - Repository created
+- Python '.gitignore' configured
 - Project scope defined
+- Initial README completed
 - Development in progress
 
 ## Planned Next Steps
