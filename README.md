@@ -33,3 +33,13 @@ This tool is intended to support, not replace, the professional judgment of audi
 3. Implement risk detection rules using Python
 4. Review and visualize the results
 5. Document limitations and improvement opportunities
+
+## Learning Log
+
+### Day 1
+
+- Created my first project repository
+- Configured a Python `.gitignore`
+- Learned the basic structure of a README file
+- Practiced Markdown bullet-point formatting
+- Defined the initial scope of the project
