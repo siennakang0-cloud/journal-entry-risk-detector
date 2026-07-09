@@ -43,3 +43,11 @@ This tool is intended to support, not replace, the professional judgment of audi
 - Learned the basic structure of a README file
 - Practiced Markdown bullet-point formatting
 - Defined the initial scope of the project
+
+### Day 2
+
+- Cloned the GitHub repository to my local computer
+- Opened the project using Visual Studio Code
+- Practiced basic Git commands in the terminal
+- Created a business problem document
+- Committed and pushed a file to GitHub
