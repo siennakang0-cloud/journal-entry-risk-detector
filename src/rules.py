@@ -10,6 +10,8 @@
   [규칙 2] 적요 누락   : 거래 설명(적요)이 비어 있는 전표
   [규칙 3] 중복 전표   : 같은 거래가 전표번호만 다르게 두 번 기표된 전표
   [규칙 4] 직무분리 위반 : 입력자와 승인자가 같은 사람인 전표
+  [규칙 5] 비정상 입력시간 : 정상 업무시간이 아닌 때에 입력된 전표  
+  [규칙 6] 한도 직전 금액 : 승인 한도 바로 아래로 쪼갠 듯한 금액의 전표
   (이후 STEP 마다 규칙을 하나씩 아래에 추가할 예정)
 
 사용법:
@@ -149,6 +151,25 @@ def detect_unusual_time(df, night_start=22, night_end=6):
     flagged["탐지사유"] = "비정상입력시간"
     return flagged
 
+def detect_just_below_limit(df, limit=APPROVAL_LIMIT, band_ratio=0.9):
+    """
+    [규칙 6] 한도 직전 금액 탐지.
+    승인 한도(limit)를 넘기지 않으려고 '바로 아래' 금액으로 맞춘 듯한 전표를
+    골라낸다.
+
+      - 판단 구간 : 한도의 band_ratio(기본 90%) 이상 ~ 한도 미만
+        예) 한도 5천만원, band_ratio 0.9 -> 4,500만원 이상 5,000만원 미만
+
+    한도를 살짝 밑도는 금액이 반복되면, 결재를 회피하려는 신호일 수 있다.
+    (금액이 한도를 '초과'하는 경우는 규칙 1(고액 전표)에서 이미 잡는다.)
+    """
+    df = add_amount_column(df)
+    band_low = limit * band_ratio
+    in_band = (df["금액"] >= band_low) & (df["금액"] < limit)
+    flagged = df[in_band].copy()
+    flagged["탐지사유"] = "한도직전금액"
+    return flagged
+
 def main():
     print("=" * 55)
     print("이상탐지 규칙 실행")
@@ -243,6 +264,22 @@ def main():
     print(f"  실제 심어 둔 비정상입력시간 : {len(answer5)} 장")
     print(f"  규칙이 찾아낸 전표          : {len(found5)} 장")
     print(f"  정확히 맞힌 전표            : {len(answer5 & found5)} 장")
+
+# ----- 규칙 6: 한도 직전 금액 -----
+    near = detect_just_below_limit(df)
+    near_vouchers = near.drop_duplicates(subset="전표번호")
+    print(f"\n[규칙 6] 한도 직전 금액 (한도 {APPROVAL_LIMIT:,}원 바로 아래)")
+    print(f"  탐지된 전표: {len(near_vouchers)} 장")
+    for _, row in near_vouchers.iterrows():
+        print(f"   - {row['전표번호']} | {row['계정과목']} | {int(row['금액']):,}원")
+
+    # 검증: 실제 심어 둔 '한도직전금액'을 잘 잡았는지 채점
+    answer6 = set(df[df["anomaly_type"] == "한도직전금액"]["전표번호"])
+    found6 = set(near_vouchers["전표번호"])
+    print("\n[검증] 정답과 비교")
+    print(f"  실제 심어 둔 한도직전금액 : {len(answer6)} 장")
+    print(f"  규칙이 찾아낸 전표        : {len(found6)} 장")
+    print(f"  정확히 맞힌 전표          : {len(answer6 & found6)} 장")
 
 if __name__ == "__main__":
     main()
