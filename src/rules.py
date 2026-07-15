@@ -9,6 +9,7 @@
   [규칙 1] 고액 전표   : 승인 한도를 초과하는 큰 금액의 전표
   [규칙 2] 적요 누락   : 거래 설명(적요)이 비어 있는 전표
   [규칙 3] 중복 전표   : 같은 거래가 전표번호만 다르게 두 번 기표된 전표
+  [규칙 4] 직무분리 위반 : 입력자와 승인자가 같은 사람인 전표
   (이후 STEP 마다 규칙을 하나씩 아래에 추가할 예정)
 
 사용법:
@@ -110,6 +111,18 @@ def detect_duplicates(df):
     flagged["탐지사유"] = "중복전표"
     return flagged
 
+def detect_sod_conflict(df):
+    """
+    [규칙 4] 직무분리(Segregation of Duties, SoD) 위반 탐지.
+    전표를 입력한 사람(입력자)과 승인한 사람(승인자)이 같은 전표를 골라낸다.
+    
+    한 사람이 입력과 승인을 모두 하면 상호 견제가 사라져 부정·오류의
+    통로가 된다. 그래서 내부통제·감사에서 반드시 확인하는 항목이다.
+    """
+    df = df.copy()
+    flagged = df[df["입력자"] == df["승인자"]].copy()
+    flagged["탐지사유"] = "직무분리위반"
+    return flagged 
 
 
 def main():
@@ -174,6 +187,22 @@ def main():
     print(f"  정확히 맞힌 전표      : {len(answer3 & found3)} 장")
     print("=" * 55)
 
+# ----- 규칙 4: 직무분리 위반 -----
+    sod = detect_sod_conflict(df)
+    sod_vouchers = sod.drop_duplicates(subset="전표번호")
+    print(f"\n[규칙 4] 직무분리 위반 (입력자 = 승인자)")
+    print(f"  탐지된 전표: {len(sod_vouchers)} 장")
+    for _, row in sod_vouchers.iterrows():
+        print(f"   - {row['전표번호']} | {row['계정과목']} | "
+              f"입력·승인 모두: {row['입력자']}")
+
+    # 검증: 실제 심어 둔 '직무분리위반'을 잘 잡았는지 채점
+    answer4 = set(df[df["anomaly_type"] == "직무분리위반"]["전표번호"])
+    found4 = set(sod_vouchers["전표번호"])
+    print("\n[검증] 정답과 비교")
+    print(f"  실제 심어 둔 직무분리위반 : {len(answer4)} 장")
+    print(f"  규칙이 찾아낸 전표        : {len(found4)} 장")
+    print(f"  정확히 맞힌 전표          : {len(answer4 & found4)} 장")
 
 if __name__ == "__main__":
     main()
