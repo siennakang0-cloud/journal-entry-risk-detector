@@ -16,6 +16,8 @@
   python src/rules.py
 """
 
+import pandas as pd
+
 from loader import load_journal_entries   # 앞 단계에서 만든 로더를 재사용
 
 # 승인 한도(원). 이 금액을 넘는 전표를 '고액 전표'로 본다.
@@ -124,6 +126,28 @@ def detect_sod_conflict(df):
     flagged["탐지사유"] = "직무분리위반"
     return flagged 
 
+def detect_unusual_time(df, night_start=22, night_end=6):
+    """
+    [규칙 5] 비정상 입력시간 탐지.
+    정상 업무시간이 아닌 때(주말 또는 심야)에 입력된 전표를 골라낸다.
+
+      - 주말 : 토요일·일요일에 입력
+      - 심야 : 밤 night_start시(기본 22시)부터 새벽 night_end시(기본 6시) 전까지
+
+    근무시간 외 입력은 정상 통제를 우회했을 가능성이 있어 점검 대상이다.
+    """
+    df = df.copy()
+    # '입력일시'(글자)를 진짜 날짜/시간 자료형으로 바꾼다. (예: "2025-05-21 12:14")
+    dt = pd.to_datetime(df["입력일시"], errors="coerce")
+
+    # 요일: 월=0 ... 토=5, 일=6  -> 5 이상이면 주말
+    is_weekend = dt.dt.weekday >= 5
+    # 시각: 22시 이상 '또는' 6시 미만이면 심야
+    is_night = (dt.dt.hour >= night_start) | (dt.dt.hour < night_end)
+
+    flagged = df[is_weekend | is_night].copy()
+    flagged["탐지사유"] = "비정상입력시간"
+    return flagged
 
 def main():
     print("=" * 55)
@@ -203,6 +227,22 @@ def main():
     print(f"  실제 심어 둔 직무분리위반 : {len(answer4)} 장")
     print(f"  규칙이 찾아낸 전표        : {len(found4)} 장")
     print(f"  정확히 맞힌 전표          : {len(answer4 & found4)} 장")
+
+# ----- 규칙 5: 비정상 입력시간 -----
+    odd = detect_unusual_time(df)
+    odd_vouchers = odd.drop_duplicates(subset="전표번호")
+    print(f"\n[규칙 5] 비정상 입력시간 (주말·심야)")
+    print(f"  탐지된 전표: {len(odd_vouchers)} 장")
+    for _, row in odd_vouchers.iterrows():
+        print(f"   - {row['전표번호']} | {row['계정과목']} | 입력: {row['입력일시']}")
+
+    # 검증: 실제 심어 둔 '비정상입력시간'을 잘 잡았는지 채점
+    answer5 = set(df[df["anomaly_type"] == "비정상입력시간"]["전표번호"])
+    found5 = set(odd_vouchers["전표번호"])
+    print("\n[검증] 정답과 비교")
+    print(f"  실제 심어 둔 비정상입력시간 : {len(answer5)} 장")
+    print(f"  규칙이 찾아낸 전표          : {len(found5)} 장")
+    print(f"  정확히 맞힌 전표            : {len(answer5 & found5)} 장")
 
 if __name__ == "__main__":
     main()
