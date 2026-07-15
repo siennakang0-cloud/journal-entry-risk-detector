@@ -12,6 +12,7 @@
   [규칙 4] 직무분리 위반 : 입력자와 승인자가 같은 사람인 전표
   [규칙 5] 비정상 입력시간 : 정상 업무시간이 아닌 때에 입력된 전표  
   [규칙 6] 한도 직전 금액 : 승인 한도 바로 아래로 쪼갠 듯한 금액의 전표
+  [규칙 7] 라운드 금액   : 1천만원 단위로 딱 떨어지는 인위적 금액의 전표
   (이후 STEP 마다 규칙을 하나씩 아래에 추가할 예정)
 
 사용법:
@@ -170,6 +171,28 @@ def detect_just_below_limit(df, limit=APPROVAL_LIMIT, band_ratio=0.9):
     flagged["탐지사유"] = "한도직전금액"
     return flagged
 
+def detect_round_amount(df, round_unit=10_000_000, upper=100_000_000):
+    """
+    [규칙 7] 라운드 금액 탐지.
+    금액이 큰 단위(round_unit, 기본 1천만원)로 '딱 떨어지는' 전표를 골라낸다.
+
+      - 조건 : 금액이 round_unit 의 배수이고(나머지가 0),
+               0보다 크며, upper(기본 1억) 미만
+      - 1억 이상의 고액은 규칙 1(고액 전표)에서 이미 잡으므로 여기서는 제외한다.
+
+    실제 거래 금액은 대개 끝자리가 어중간하다. 1천만·2천만처럼 지나치게
+    깔끔한 금액이 반복되면 추정·가공 전표일 수 있어 점검 대상이다.
+    """
+    df = add_amount_column(df)
+    is_round = (
+        (df["금액"] > 0)
+        & (df["금액"] % round_unit == 0)   # round_unit 으로 나눈 나머지가 0
+        & (df["금액"] < upper)
+    )
+    flagged = df[is_round].copy()
+    flagged["탐지사유"] = "라운드금액"
+    return flagged
+
 def main():
     print("=" * 55)
     print("이상탐지 규칙 실행")
@@ -280,6 +303,22 @@ def main():
     print(f"  실제 심어 둔 한도직전금액 : {len(answer6)} 장")
     print(f"  규칙이 찾아낸 전표        : {len(found6)} 장")
     print(f"  정확히 맞힌 전표          : {len(answer6 & found6)} 장")
+
+# ----- 규칙 7: 라운드 금액 -----
+    rnd = detect_round_amount(df)
+    rnd_vouchers = rnd.drop_duplicates(subset="전표번호")
+    print(f"\n[규칙 7] 라운드 금액 (1천만원 단위로 딱 떨어짐)")
+    print(f"  탐지된 전표: {len(rnd_vouchers)} 장")
+    for _, row in rnd_vouchers.iterrows():
+        print(f"   - {row['전표번호']} | {row['계정과목']} | {int(row['금액']):,}원")
+
+    # 검증: 실제 심어 둔 '라운드금액'을 잘 잡았는지 채점
+    answer7 = set(df[df["anomaly_type"] == "라운드금액"]["전표번호"])
+    found7 = set(rnd_vouchers["전표번호"])
+    print("\n[검증] 정답과 비교")
+    print(f"  실제 심어 둔 라운드금액 : {len(answer7)} 장")
+    print(f"  규칙이 찾아낸 전표      : {len(found7)} 장")
+    print(f"  정확히 맞힌 전표        : {len(answer7 & found7)} 장")
 
 if __name__ == "__main__":
     main()
