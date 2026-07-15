@@ -8,13 +8,12 @@
 
 하는 일:
   1) CSV 전표 데이터를 pandas 로 불러온다.
-  2) 필요한 컬럼이 다 있는지 확인한다.
-  3) 결측치(빈 값)가 어디에 몇 개 있는지 센다.
-  4) 차변 합계 = 대변 합계 인지(복식부기 균형) 확인한다.
-  5) 전표 한 장(voucher) 단위로도 차대변이 맞는지 확인한다.
+  2) 합계/소계 같은 '명세가 아닌 행'을 걸러낸다.
+  3) 금액 컬럼을 확실히 숫자로 변환한다.
+  4) 필요한 컬럼·결측치·차대변 균형을 점검한다.
 
 사용법:
-  python src/loader.py
+  python3 src/loader.py
 """
 
 import pandas as pd
@@ -27,6 +26,9 @@ REQUIRED_COLUMNS = [
 
 DATA_PATH = "data/sample_journal_entries.csv"
 
+# 금액이 들어 있는 컬럼들. 반드시 '숫자'로 다뤄야 계산·비교가 된다.
+AMOUNT_COLUMNS = ["차변금액", "대변금액"]
+
 
 def load_journal_entries(path=DATA_PATH):
     """
@@ -37,6 +39,26 @@ def load_journal_entries(path=DATA_PATH):
       자동으로 걸러 주는 인코딩이다.
     """
     df = pd.read_csv(path, encoding="utf-8-sig")
+
+    # 합계/소계 같은 '명세가 아닌 행' 제거:
+    #   실제 전표 행은 전기일자와 계정과목이 반드시 있다.
+    #   둘 중 하나라도 비어 있으면(엑셀에서 딸려온 '합계' 행 등) 데이터가
+    #   아니므로 분석에서 제외한다.
+    before = len(df)
+    df = df[df["전기일자"].notna() & df["계정과목"].notna()].copy()
+    removed = before - len(df)
+    if removed:
+        print(f"[정보] 명세가 아닌 행 {removed}개(합계/소계 등)를 제외했습니다.")
+
+    # 금액 컬럼 정제:
+    #   엑셀에서 열었다 저장하면 숫자에 콤마(1,411,200)가 붙어 '글자'로 읽힌다.
+    #   그러면 크기 비교(>)나 합계 계산이 안 된다. 콤마·공백을 제거하고
+    #   확실하게 정수(숫자)로 변환한다.
+    for col in AMOUNT_COLUMNS:
+        if col in df.columns:
+            cleaned = df[col].astype(str).str.replace(",", "", regex=False).str.strip()
+            df[col] = pd.to_numeric(cleaned, errors="coerce").fillna(0).astype("int64")
+
     return df
 
 
@@ -86,9 +108,7 @@ def check_voucher_balance(df):
     전표 '한 장(전표번호)' 단위로도 차변=대변인지 확인한다.
     전체 합계는 맞아도 개별 전표가 틀어져 있을 수 있어 따로 본다.
     """
-    # 전표번호별로 차변합, 대변합을 각각 더한다.
     grouped = df.groupby("전표번호")[["차변금액", "대변금액"]].sum()
-    # 차변합과 대변합이 다른 전표만 골라낸다.
     unbalanced = grouped[grouped["차변금액"] != grouped["대변금액"]]
     if unbalanced.empty:
         print("[OK] 모든 전표가 개별적으로 차대변이 맞습니다.")
@@ -105,7 +125,6 @@ def main():
 
     df = load_journal_entries()
 
-    # 기본 규모 파악
     voucher_count = df["전표번호"].nunique()   # 서로 다른 전표번호의 수 = 전표 장수
     print(f"불러온 라인 수 : {len(df)} 줄")
     print(f"전표 장수      : {voucher_count} 장")
@@ -121,7 +140,5 @@ def main():
     print("=" * 50)
 
 
-# 이 파일을 직접 실행할 때만 main()이 돌아간다.
-# (나중에 다른 파일에서 load_journal_entries() 함수만 가져다 쓸 수 있게 하려는 것)
 if __name__ == "__main__":
     main()
