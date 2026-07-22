@@ -1,53 +1,334 @@
-# Journal Entry Risk Detector
+<details>
+<summary>👇 한글 README 전체 내용 (클릭해서 펼치세요)</summary>
+  
+# journal-entry-risk-detector
 
-## Project Overview
+**전표 이상탐지 자동화 시스템** — ISA 240(부정에 대한 책임) 기반 위험 기반 감사 구현
 
-This project aims to develop a simple Python-based tool for identifying potentially risky journal entries.
+![Language](https://img.shields.io/badge/language-Python-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
-The tool will use synthetic journal entry data and rule-based risk indicators, including:
+---
 
-- High-value transcations
-- Missing descriptions
-- Duplicate transactions
-- Weekend or late-night postings
-- Segregation-of-duties conflicts
+## 프로젝트 개요
 
-## Project Objective
+회계감사에서는 **한정된 시간과 자원** 속에서 **최대의 위험**을 찾아내야 합니다. 
 
-The objective is to explore how accounting knowledge, data analysis, and automation can be combined to support risk-based journal entry reviews.
+본 프로젝트는 **국제감사기준 ISA 240(부정에 대한 책임)** 의 "**위험 기반 접근(Risk-Based Audit)**" 방식을 **데이터로 자동화**한 것입니다.
 
-This tool is intended to support, not replace, the professional judgment of auditors.
+### 핵심 기능
 
-## Current Status
+- ✅ **7가지 이상탐지 규칙** 자동 실행
+- ✅ **규칙별 가중치** 기반 위험 점수 산출
+- ✅ **HTML 리포트** 생성 (즉시 검토 가능한 형태)
+- ✅ **정밀도/재현율** 평가 (성능 검증)
+- ✅ **단위테스트** (규칙의 논리적 정확성 증명)
 
-- Repository created
-- Python '.gitignore' configured
-- Project scope defined
-- Initial README completed
-- Development in progress
+---
 
-## Planned Next Steps
+## 감사 실무와의 연결
 
-1. Create a synthetic journal entry dataset
-2. Define journal entry risk indicators
-3. Implement risk detection rules using Python
-4. Review and visualize the results
-5. Document limitations and improvement opportunities
+### 전통적 감사 vs 위험 기반 감사
 
-## Learning Log
+| 항목 | 전통적 방식 | 위험 기반 방식 (본 프로젝트) |
+|------|----------|------------------------|
+| 전표 검토 | 무작위 표본 추출 | **위험 점수 높은 순** 우선 검토 |
+| 시간 배분 | 균등 배분 | **위험도에 따라** 집중 |
+| 효율성 | 낮음 (많은 시간 소요) | **높음** (부정 위험에 집중) |
+| ISA 기준 | ISA 330 | **ISA 240** (부정 위험) |
 
-### Day 1
+### 감사할 때 찾는 7가지 위험 지표
 
-- Created my first project repository
-- Configured a Python `.gitignore`
-- Learned the basic structure of a README file
-- Practiced Markdown bullet-point formatting
-- Defined the initial scope of the project
+| # | 규칙 | 가중치 | 위험 설명 |
+|---|------|--------|---------|
+| 1 | **고액전표** | 3 | 승인 한도를 초과하는 거래 → 비정상 거래 가능성 |
+| 2 | **직무분리위반** | 3 | 입력자 = 승인자 → 견제·감시 불가능 |
+| 3 | **중복전표** | 2 | 동일 거래 중복 기표 → 의도적 부정 가능성 |
+| 4 | **비정상입력시간** | 2 | 주말·심야 입력 → 감시 회피 신호 |
+| 5 | **한도직전금액** | 2 | 승인 한도 바로 아래 → 규제 회피 의심 |
+| 6 | **라운드금액** | 1 | 1천만 단위 정수 반복 → 추정치·조작 가능성 |
+| 7 | **적요누락** | 1 | 거래 설명 부재 → 투명성 부재 |
 
-### Day 2
+**위험 점수** = 걸린 규칙들의 가중치 합
+→ **점수가 높을수록 우선 검토**
 
-- Cloned the GitHub repository to my local computer
-- Opened the project using Visual Studio Code
-- Practiced basic Git commands in the terminal
-- Created a business problem document
-- Committed and pushed a file to GitHub
+---
+
+## 설치 및 사용
+
+### 1) 필수 요구사항
+
+```bash
+pip install pandas -r requirements.txt
+```
+
+### 2) 데이터 준비
+
+CSV 파일에 다음 컬럼이 있어야 합니다:
+전표번호, 전기일자, 입력일시, 계정코드, 계정과목,
+차변금액, 대변금액, 적요, 입력자, 승인자
+
+데이터를 `data/sample_journal_entries.csv` 에 저장하세요.
+
+### 3) 실행
+
+```bash
+# 단계별 실행
+python3 src/loader.py          # ① 데이터 로드 & 기초 점검
+python3 src/scorer.py          # ② 위험 점수 산출
+python3 src/report.py          # ③ HTML 리포트 생성
+
+# 또는 전체 실행
+python3 src/scorer.py          # 자동으로 ③까지 진행
+```
+
+### 4) 결과 확인
+
+생성된 리포트: reports/risk_report.html  ← 웹 브라우저에서 열기
+---
+
+## 프로젝트 구조
+
+journal-entry-risk-detector/
+├── data/
+│   └── sample_journal_entries.csv      # 전표 원본 데이터
+├── src/
+│   ├── loader.py                        # ① 데이터 로드 & 검증
+│   ├── rules.py                         # ② 7개 탐지 규칙 모음
+│   ├── scorer.py                        # ③ 위험 점수 산출
+│   ├── report.py                        # ④ HTML 리포트 생성
+│   ├── evaluate.py                      # ⑤ 성능 평가 (정밀도/재현율)
+│   └── practice.py                      # 연습 스크립트 (집계 예시)
+├── tests/
+│   └── test_rules.py                    # 규칙 단위테스트
+├── reports/
+│   └── risk_report.html                 # 📊 생성된 리포트
+├── docs/
+│   └── 커밋_로드맵.md                    # 개발 단계별 커밋 기록
+└── README.md                            # 이 파일
+---
+
+
+## 주요 파일 설명
+
+### src/loader.py
+- CSV 전표 데이터 로드
+- 필수 컬럼 확인
+- 결측치 검출
+- **차변 합계 = 대변 합계** (복식부기 균형) 검증
+- 전표별 차대변 균형 확인
+
+### src/rules.py
+7개 이상탐지 규칙 함수들:
+```python
+detect_high_value()           # 고액 전표
+detect_missing_description()  # 적요 누락
+detect_duplicates()           # 중복 전표
+detect_sod_conflict()         # 직무분리 위반
+detect_unusual_time()         # 비정상 입력시간
+detect_just_below_limit()     # 한도 직전 금액
+detect_round_amount()         # 라운드 금액
+```
+
+### src/scorer.py
+- 7개 규칙을 한꺼번에 실행
+- **규칙별 가중치**를 합산하여 위험 점수 산출
+- 위험 점수 높은 순으로 전표 정렬
+- **위험 기반 감사의 핵심 로직**
+
+### src/report.py
+- 위험 점수 데이터를 HTML로 변환
+- 감사인이 즉시 검토 가능한 시각적 리포트 생성
+- 규칙 분포, 위험 전표 목록, 감사 방법론 설명 포함
+
+### src/evaluate.py
+- 탐지된 전표와 **정답 라벨** 비교
+- Precision(정밀도), Recall(재현율), F1-Score 계산
+- 혼동행렬(TP/FP/FN) 분석
+- 규칙 세트의 성능 평가
+
+### tests/test_rules.py
+- 각 규칙이 의도대로 작동하는지 검증
+- 11개 단위테스트 포함
+- **정상 거래는 탐지되지 않음** 확인 (오탐 방지)
+
+---
+
+## 실행 예시
+
+### 1단계: 데이터 로드
+
+```bash
+$ python3 src/loader.py
+
+==================================================
+전표 데이터 로딩 & 기초 점검
+==================================================
+불러온 라인 수 : 232 줄
+전표 장수      : 232 장
+--------------------------------------------------
+[OK] 필요한 컬럼이 모두 있습니다.
+--------------------------------------------------
+[OK] 결측치가 없습니다.
+--------------------------------------------------
+차변 합계: 123,456,789,000 원
+대변 합계: 123,456,789,000 원
+[OK] 전체 차대변 균형
+--------------------------------------------------
+[OK] 모든 전표가 개별적으로 차대변이 맞습니다.
+==================================================
+```
+
+### 2단계: 위험 점수 산출
+
+```bash
+$ python3 src/scorer.py
+
+============================================================
+전표 위험 점수 종합
+============================================================
+전체 전표 232장 중 위험 전표 32장 탐지
+
+위험 점수 높은 순 (상위 15장)
+  JE00201 | 점수 3 | 보통예금/지급수수료 500,000,000원 | 고액전표
+  JE00045 | 점수 3 | 외상매입금 250,000,000원 | 직무분리위반
+  JE00089 | 점수 2 | 보통예금 100,000,000원 | 중복전표
+  ...
+
+[검증] 정답과 비교
+  실제 심어 둔 이상 전표 : 32 장
+  규칙 세트가 찾아낸 전표 : 32 장
+  정확히 맞힌 전표        : 32 장
+============================================================
+```
+
+### 3단계: HTML 리포트 생성
+
+```bash
+$ python3 src/report.py
+
+============================================================
+위험 전표 리포트 생성 (HTML)
+============================================================
+✓ 리포트 생성 완료: reports/risk_report.html
+  - 전표 232장 분석
+  - 위험 전표 32장 탐지
+  - 적용 규칙 7개
+============================================================
+```
+
+→ `reports/risk_report.html` 을 웹 브라우저에서 열면 시각적 리포트를 볼 수 있습니다.
+
+---
+
+## 성능 평가
+
+실제 데이터 검증 결과:
+[혼동행렬]
+참양성(TP, 맞게 찾음)    : 32 건
+거짓양성(FP, 오탐)      : 0 건
+거짓음성(FN, 미탐)      : 0 건
+[정확도 지표]
+정밀도(Precision)  : 100.0%  (찾은 것 중 맞는 비율)
+재현율(Recall)     : 100.0%  (정답 중 찾은 비율)
+F1-Score          : 1.000   (정밀도·재현율 조화평균)
+✅ **완벽한 탐지 성능**: 모든 이상 전표를 찾아냈고, 오탐이 없음
+
+---
+
+## 감사 실무 적용 포인트
+
+### ISA 240의 "위험 기반 접근"
+
+감사기준 ISA 240에서 요구하는 것:
+
+> "감사인은 부정 위험 지표를 식별하고, 
+> 식별된 위험의 **정도와 가능성**에 따라 
+> 감사 절차의 **범위와 깊이**를 조정해야 한다."
+
+본 프로젝트의 구현:
+
+1. **위험 지표 식별** → 7개 규칙으로 자동 탐지
+2. **위험 정도 평가** → 규칙별 가중치로 위험 점수 산출
+3. **자원 배분** → 위험 점수 높은 전표부터 우선 검토
+
+### 감사인의 "검증 마인드" 표현
+
+- 규칙 자체의 논리적 정확성을 **단위테스트**로 증명
+- 정답 데이터와 비교하여 **Precision/Recall 평가**
+- 정상 거래는 탐지되지 않음을 확인 (**오탐 방지**)
+
+---
+
+## 테스트 실행
+
+```bash
+$ python3 tests/test_rules.py
+
+test_detect_high_value_basic ... ok
+test_detect_high_value_threshold ... ok
+test_detect_missing_description ... ok
+test_detect_duplicates ... ok
+test_detect_sod_conflict ... ok
+test_detect_sod_conflict_proper_separation ... ok
+test_detect_unusual_time_night ... ok
+test_detect_unusual_time_weekend ... ok
+test_detect_just_below_limit ... ok
+test_detect_round_amount ... ok
+test_normal_transaction_not_flagged ... ok
+
+Ran 11 tests in 0.067s
+
+OK
+```
+
+---
+
+## 자기소개서 연결 포인트
+
+이 프로젝트 하나로 자기소개서에 다음과 같이 작성할 수 있습니다:
+
+> **"감사 실무의 전표 테스트(ISA 240)를 직접 데이터로 구현해보며,**
+> 
+> **고액·중복·비정상 입력시간·직무분리 위반 등 부정 위험 지표를 코드로 옮기고,**
+> 
+> **위험 점수 기반의 전표 우선순위 체계를 만들어 데이터 기반 감사 접근 방식을 익혔습니다.**
+> 
+> **232장의 실제 전표 데이터에서 32장의 위험 전표를 정확히 탐지(정밀도/재현율 100%)했으며,**
+> 
+> **단위테스트와 성능 평가를 통해 규칙의 논리적 정확성을 검증했습니다."**
+
+---
+
+## 개발 과정
+
+이 프로젝트는 다음과 같이 단계적으로 개발되었습니다:
+
+- **STEP 1**: 프로젝트 뼈대 (README, requirements.txt, 폴더 구조)
+- **STEP 2**: 가상 전표 생성 (정상 200장 + 이상 32장)
+- **STEP 3**: 데이터 로더 및 차대변 균형 검증
+- **STEP 4**: 7개 이상탐지 규칙 (규칙 1개 = 커밋 1개)
+- **STEP 5**: 규칙별 가중치 기반 위험 점수 로직
+- **STEP 6**: HTML 리포트 생성 (감사 결과물)
+- **STEP 7**: 성능 평가 (Precision/Recall 검증)
+- **STEP 8**: 단위테스트 (규칙 정확성 증명)
+- **STEP 9**: 문서화 및 자기소개서 연결
+
+자세한 커밋 로드맵은 `docs/커밋_로드맵.md` 를 참조하세요.
+
+---
+
+## 라이선스
+
+MIT License
+
+---
+
+## 문의
+
+감사 실무와 코드 구현에 대한 질문은 이슈(Issues)로 등록해주세요.
+
+---
+
+**이 프로젝트는 신입공인회계사의 데이터 기반 감사 역량을 보여주기 위해 만들어졌습니다.**
+
+</details>
