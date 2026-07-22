@@ -1,0 +1,6 @@
+﻿risk_type,설명,탐지건수
+high_amount,고액 거래(통계적 이상치),49
+missing_description,적요(설명) 누락,10
+duplicate,중복 전표,16
+off_hours,주말/야간 기표,10
+segregation_conflict,직무분리 위반(작성=승인),9
