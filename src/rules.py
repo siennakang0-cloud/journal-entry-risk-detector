@@ -10,17 +10,15 @@
   [규칙 2] 적요 누락   : 거래 설명(적요)이 비어 있는 전표
   [규칙 3] 중복 전표   : 같은 거래가 전표번호만 다르게 두 번 기표된 전표
   [규칙 4] 직무분리 위반 : 입력자와 승인자가 같은 사람인 전표
-  [규칙 5] 비정상 입력시간 : 정상 업무시간이 아닌 때에 입력된 전표  
+  [규칙 5] 비정상 입력시간 : 주말·심야 등 업무시간 외에 입력된 전표
   [규칙 6] 한도 직전 금액 : 승인 한도 바로 아래로 쪼갠 듯한 금액의 전표
   [규칙 7] 라운드 금액   : 1천만원 단위로 딱 떨어지는 인위적 금액의 전표
-  (이후 STEP 마다 규칙을 하나씩 아래에 추가할 예정)
 
 사용법:
   python src/rules.py
 """
 
 import pandas as pd
-
 from loader import load_journal_entries   # 앞 단계에서 만든 로더를 재사용
 
 # 승인 한도(원). 이 금액을 넘는 전표를 '고액 전표'로 본다.
@@ -67,6 +65,7 @@ def detect_missing_description(df):
     flagged["탐지사유"] = "적요누락"
     return flagged
 
+
 def detect_duplicates(df):
     """
     [규칙 3] 중복 전표 탐지.
@@ -78,7 +77,7 @@ def detect_duplicates(df):
       같은 지문이 두 번 이상 나타나면, 먼저 입력된 전표(번호가 작은 원본)는
       두고 그 뒤에 또 들어온 전표를 '중복'으로 표시한다.
 
-       ※ 실무에서는 중복쌍의 '양쪽'을 모두 검토하지만, 탐지 결과로는
+    ※ 실무에서는 중복쌍의 '양쪽'을 모두 검토하지만, 탐지 결과로는
       뒤늦게 또 들어온(반복된) 전표를 위험 신호로 표시한다.
     """
     df = add_amount_column(df)
@@ -116,18 +115,20 @@ def detect_duplicates(df):
     flagged["탐지사유"] = "중복전표"
     return flagged
 
+
 def detect_sod_conflict(df):
     """
-    [규칙 4] 직무분리(Segregation of Duties, SoD) 위반 탐지.
+    [규칙 4] 직무분리(SoD, Segregation of Duties) 위반 탐지.
     전표를 입력한 사람(입력자)과 승인한 사람(승인자)이 같은 전표를 골라낸다.
-    
+
     한 사람이 입력과 승인을 모두 하면 상호 견제가 사라져 부정·오류의
     통로가 된다. 그래서 내부통제·감사에서 반드시 확인하는 항목이다.
     """
     df = df.copy()
     flagged = df[df["입력자"] == df["승인자"]].copy()
     flagged["탐지사유"] = "직무분리위반"
-    return flagged 
+    return flagged
+
 
 def detect_unusual_time(df, night_start=22, night_end=6):
     """
@@ -152,6 +153,7 @@ def detect_unusual_time(df, night_start=22, night_end=6):
     flagged["탐지사유"] = "비정상입력시간"
     return flagged
 
+
 def detect_just_below_limit(df, limit=APPROVAL_LIMIT, band_ratio=0.9):
     """
     [규칙 6] 한도 직전 금액 탐지.
@@ -170,6 +172,7 @@ def detect_just_below_limit(df, limit=APPROVAL_LIMIT, band_ratio=0.9):
     flagged = df[in_band].copy()
     flagged["탐지사유"] = "한도직전금액"
     return flagged
+
 
 def detect_round_amount(df, round_unit=10_000_000, upper=100_000_000):
     """
@@ -192,6 +195,7 @@ def detect_round_amount(df, round_unit=10_000_000, upper=100_000_000):
     flagged = df[is_round].copy()
     flagged["탐지사유"] = "라운드금액"
     return flagged
+
 
 def main():
     print("=" * 55)
@@ -235,7 +239,6 @@ def main():
     print(f"  실제 심어 둔 적요누락 : {len(answer2)} 장")
     print(f"  규칙이 찾아낸 전표    : {len(found2)} 장")
     print(f"  정확히 맞힌 전표      : {len(answer2 & found2)} 장")
-    print("=" * 55)
 
     # ----- 규칙 3: 중복 전표 -----
     dup = detect_duplicates(df)
@@ -253,9 +256,8 @@ def main():
     print(f"  실제 심어 둔 중복전표 : {len(answer3)} 장")
     print(f"  규칙이 찾아낸 전표    : {len(found3)} 장")
     print(f"  정확히 맞힌 전표      : {len(answer3 & found3)} 장")
-    print("=" * 55)
 
-# ----- 규칙 4: 직무분리 위반 -----
+    # ----- 규칙 4: 직무분리 위반 -----
     sod = detect_sod_conflict(df)
     sod_vouchers = sod.drop_duplicates(subset="전표번호")
     print(f"\n[규칙 4] 직무분리 위반 (입력자 = 승인자)")
@@ -272,7 +274,7 @@ def main():
     print(f"  규칙이 찾아낸 전표        : {len(found4)} 장")
     print(f"  정확히 맞힌 전표          : {len(answer4 & found4)} 장")
 
-# ----- 규칙 5: 비정상 입력시간 -----
+    # ----- 규칙 5: 비정상 입력시간 -----
     odd = detect_unusual_time(df)
     odd_vouchers = odd.drop_duplicates(subset="전표번호")
     print(f"\n[규칙 5] 비정상 입력시간 (주말·심야)")
@@ -288,7 +290,7 @@ def main():
     print(f"  규칙이 찾아낸 전표          : {len(found5)} 장")
     print(f"  정확히 맞힌 전표            : {len(answer5 & found5)} 장")
 
-# ----- 규칙 6: 한도 직전 금액 -----
+    # ----- 규칙 6: 한도 직전 금액 -----
     near = detect_just_below_limit(df)
     near_vouchers = near.drop_duplicates(subset="전표번호")
     print(f"\n[규칙 6] 한도 직전 금액 (한도 {APPROVAL_LIMIT:,}원 바로 아래)")
@@ -304,7 +306,7 @@ def main():
     print(f"  규칙이 찾아낸 전표        : {len(found6)} 장")
     print(f"  정확히 맞힌 전표          : {len(answer6 & found6)} 장")
 
-# ----- 규칙 7: 라운드 금액 -----
+    # ----- 규칙 7: 라운드 금액 -----
     rnd = detect_round_amount(df)
     rnd_vouchers = rnd.drop_duplicates(subset="전표번호")
     print(f"\n[규칙 7] 라운드 금액 (1천만원 단위로 딱 떨어짐)")
@@ -319,6 +321,8 @@ def main():
     print(f"  실제 심어 둔 라운드금액 : {len(answer7)} 장")
     print(f"  규칙이 찾아낸 전표      : {len(found7)} 장")
     print(f"  정확히 맞힌 전표        : {len(answer7 & found7)} 장")
+    print("=" * 55)
+
 
 if __name__ == "__main__":
     main()

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 전표 위험 점수 종합
-=======================
+=====================
 
 지금까지 만든 7개 이상탐지 규칙을 '한꺼번에' 돌려서,
 전표마다 (1) 어떤 규칙들에 걸렸는지, (2) 위험 점수가 몇 점인지 종합한다.
@@ -10,14 +10,13 @@
   - 규칙마다 심각도가 달라서 가중치를 다르게 준다. (아래 RULE_WEIGHTS)
   - 점수가 높은 전표부터 우선 검토 -> 감사의 '위험 기반 접근'
 
-  사용법:
-    python3 src/scorer.py
+사용법:
+  python3 src/scorer.py
 """
 
 import pandas as pd
 from loader import load_journal_entries
 import rules
-
 
 # 규칙별 가중치(심각도). 값이 클수록 더 위험하다고 본다.
 RULE_WEIGHTS = {
@@ -27,7 +26,7 @@ RULE_WEIGHTS = {
     "비정상입력시간": 2,
     "한도직전금액": 2,
     "라운드금액": 1,
-    "적요누락":1,
+    "적요누락": 1,
 }
 
 # 실행할 탐지 규칙 함수들 (rules.py 에서 가져온다)
@@ -41,6 +40,7 @@ DETECTORS = [
     rules.detect_round_amount,
 ]
 
+
 def collect_flags(df):
     """
     모든 규칙을 실행해서, 걸린 (전표번호, 탐지사유)들을 한 표로 모은다.
@@ -52,8 +52,8 @@ def collect_flags(df):
         for _, row in flagged.iterrows():
             records.append({"전표번호": row["전표번호"], "탐지사유": row["탐지사유"]})
     return pd.DataFrame(records)
-        
-        
+
+
 def score_vouchers(df):
     """
     전표별로 걸린 규칙 목록·개수·위험 점수를 계산해 표로 돌려준다.
@@ -118,4 +118,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
