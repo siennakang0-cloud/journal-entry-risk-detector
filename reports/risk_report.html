@@ -1,0 +1,612 @@
+
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>전표 위험 분석 리포트</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 40px 20px;
+                min-height: 100vh;
+            }
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                overflow: hidden;
+            }
+            .header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 40px;
+                text-align: center;
+            }
+            .header h1 {
+                font-size: 2.5em;
+                margin-bottom: 10px;
+            }
+            .header p {
+                font-size: 1.1em;
+                opacity: 0.9;
+            }
+            .summary {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 20px;
+                padding: 30px;
+                background: #f8f9fa;
+                border-bottom: 1px solid #e9ecef;
+            }
+            .summary-card {
+                text-align: center;
+                padding: 20px;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+            .summary-card .number {
+                font-size: 2.5em;
+                font-weight: bold;
+                color: #667eea;
+                margin-bottom: 10px;
+            }
+            .summary-card .label {
+                font-size: 0.9em;
+                color: #6c757d;
+            }
+            .content {
+                padding: 40px;
+            }
+            .section {
+                margin-bottom: 50px;
+            }
+            .section h2 {
+                font-size: 1.8em;
+                color: #333;
+                margin-bottom: 20px;
+                padding-bottom: 10px;
+                border-bottom: 3px solid #667eea;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+            }
+            th {
+                background: #667eea;
+                color: white;
+                padding: 12px;
+                text-align: left;
+                font-weight: 600;
+                font-size: 0.95em;
+            }
+            td {
+                padding: 12px;
+                border-bottom: 1px solid #e9ecef;
+                font-size: 0.95em;
+            }
+            tr:hover {
+                background: #f8f9fa;
+            }
+            .risk-high {
+                color: #dc3545;
+                font-weight: bold;
+            }
+            .risk-medium {
+                color: #ff9800;
+                font-weight: bold;
+            }
+            .risk-low {
+                color: #28a745;
+            }
+            .footer {
+                background: #f8f9fa;
+                padding: 30px;
+                text-align: center;
+                color: #6c757d;
+                font-size: 0.9em;
+                border-top: 1px solid #e9ecef;
+            }
+            .footer .timestamp {
+                color: #999;
+                font-size: 0.85em;
+                margin-top: 10px;
+            }
+            @media (max-width: 768px) {
+                .summary {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+                table {
+                    font-size: 0.85em;
+                }
+                th, td {
+                    padding: 8px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>📊 전표 위험 분석 리포트</h1>
+                <p>Journal Entry Risk Detector · Risk-Based Audit Approach</p>
+            </div>
+
+            <div class="summary">
+                <div class="summary-card">
+                    <div class="number">232</div>
+                    <div class="label">전체 전표</div>
+                </div>
+                <div class="summary-card">
+                    <div class="number" style="color: #dc3545;">32</div>
+                    <div class="label">위험 전표</div>
+                </div>
+                <div class="summary-card">
+                    <div class="number">3</div>
+                    <div class="label">최고 위험 점수</div>
+                </div>
+                <div class="summary-card">
+                    <div class="number">13.8%</div>
+                    <div class="label">위험 비율</div>
+                </div>
+            </div>
+
+            <div class="content">
+                <!-- 규칙 분포 -->
+                <div class="section">
+                    <h2>🎯 탐지 규칙 분포</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>탐지 규칙</th>
+                                <th>적중 횟수</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>고액전표</td><td>5</td></tr><tr><td>적요누락</td><td>5</td></tr><tr><td>직무분리위반</td><td>5</td></tr><tr><td>비정상입력시간</td><td>5</td></tr><tr><td>중복전표</td><td>4</td></tr><tr><td>한도직전금액</td><td>4</td></tr><tr><td>라운드금액</td><td>4</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 위험 전표 목록 -->
+                <div class="section">
+                    <h2>⚠️ 위험 전표 목록 (위험도순)</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>전표번호</th>
+                                <th>위험점수</th>
+                                <th>걸린규칙</th>
+                                <th>금액</th>
+                                <th>전기일자</th>
+                                <th>계정과목</th>
+                                <th>탐지 사유</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+        <tr>
+            <td>JE00203</td>
+            <td style="text-align:right; color: orange; font-weight:bold;">
+                3
+            </td>
+            <td>1</td>
+            <td>800,000,000</td>
+            <td>2025-08-06</td>
+            <td>보통예금/지급수수료</td>
+            <td>고액전표</td>
+        </tr>
+        
+        <tr>
+            <td>JE00205</td>
+            <td style="text-align:right; color: orange; font-weight:bold;">
+                3
+            </td>
+            <td>1</td>
+            <td>800,000,000</td>
+            <td>2025-12-15</td>
+            <td>급여/현금</td>
+            <td>고액전표</td>
+        </tr>
+        
+        <tr>
+            <td>JE00201</td>
+            <td style="text-align:right; color: orange; font-weight:bold;">
+                3
+            </td>
+            <td>1</td>
+            <td>500,000,000</td>
+            <td>2025-03-24</td>
+            <td>보통예금/지급수수료</td>
+            <td>고액전표</td>
+        </tr>
+        
+        <tr>
+            <td>JE00202</td>
+            <td style="text-align:right; color: orange; font-weight:bold;">
+                3
+            </td>
+            <td>1</td>
+            <td>400,000,000</td>
+            <td>2025-03-24</td>
+            <td>외상매출금/제품매출</td>
+            <td>고액전표</td>
+        </tr>
+        
+        <tr>
+            <td>JE00204</td>
+            <td style="text-align:right; color: orange; font-weight:bold;">
+                3
+            </td>
+            <td>1</td>
+            <td>400,000,000</td>
+            <td>2025-09-22</td>
+            <td>급여/현금</td>
+            <td>고액전표</td>
+        </tr>
+        
+        <tr>
+            <td>JE00219</td>
+            <td style="text-align:right; color: orange; font-weight:bold;">
+                3
+            </td>
+            <td>1</td>
+            <td>23,635,500</td>
+            <td>2025-12-15</td>
+            <td>감가상각누계액/감가상각비</td>
+            <td>직무분리위반</td>
+        </tr>
+        
+        <tr>
+            <td>JE00220</td>
+            <td style="text-align:right; color: orange; font-weight:bold;">
+                3
+            </td>
+            <td>1</td>
+            <td>23,156,200</td>
+            <td>2025-02-04</td>
+            <td>상품/외상매입금</td>
+            <td>직무분리위반</td>
+        </tr>
+        
+        <tr>
+            <td>JE00216</td>
+            <td style="text-align:right; color: orange; font-weight:bold;">
+                3
+            </td>
+            <td>1</td>
+            <td>18,507,700</td>
+            <td>2025-11-27</td>
+            <td>접대비/현금</td>
+            <td>직무분리위반</td>
+        </tr>
+        
+        <tr>
+            <td>JE00217</td>
+            <td style="text-align:right; color: orange; font-weight:bold;">
+                3
+            </td>
+            <td>1</td>
+            <td>13,520,100</td>
+            <td>2025-04-14</td>
+            <td>상품/외상매입금</td>
+            <td>직무분리위반</td>
+        </tr>
+        
+        <tr>
+            <td>JE00218</td>
+            <td style="text-align:right; color: orange; font-weight:bold;">
+                3
+            </td>
+            <td>1</td>
+            <td>9,387,500</td>
+            <td>2025-11-18</td>
+            <td>외상매출금/현금</td>
+            <td>직무분리위반</td>
+        </tr>
+        
+        <tr>
+            <td>JE00222</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                2
+            </td>
+            <td>1</td>
+            <td>49,800,000</td>
+            <td>2025-01-20</td>
+            <td>보통예금/지급수수료</td>
+            <td>한도직전금액</td>
+        </tr>
+        
+        <tr>
+            <td>JE00221</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                2
+            </td>
+            <td>1</td>
+            <td>49,500,000</td>
+            <td>2025-01-29</td>
+            <td>급여/현금</td>
+            <td>한도직전금액</td>
+        </tr>
+        
+        <tr>
+            <td>JE00223</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                2
+            </td>
+            <td>1</td>
+            <td>49,500,000</td>
+            <td>2025-11-03</td>
+            <td>외상매출금/현금</td>
+            <td>한도직전금액</td>
+        </tr>
+        
+        <tr>
+            <td>JE00224</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                2
+            </td>
+            <td>1</td>
+            <td>49,500,000</td>
+            <td>2025-12-01</td>
+            <td>보통예금/지급수수료</td>
+            <td>한도직전금액</td>
+        </tr>
+        
+        <tr>
+            <td>JE00232</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                2
+            </td>
+            <td>1</td>
+            <td>28,421,600</td>
+            <td>2025-08-04</td>
+            <td>접대비/현금</td>
+            <td>중복전표</td>
+        </tr>
+        
+        <tr>
+            <td>JE00231</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                2
+            </td>
+            <td>1</td>
+            <td>21,854,900</td>
+            <td>2025-06-24</td>
+            <td>급여/현금</td>
+            <td>중복전표</td>
+        </tr>
+        
+        <tr>
+            <td>JE00211</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                2
+            </td>
+            <td>1</td>
+            <td>21,303,400</td>
+            <td>2026-01-03</td>
+            <td>감가상각누계액/감가상각비</td>
+            <td>비정상입력시간</td>
+        </tr>
+        
+        <tr>
+            <td>JE00215</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                2
+            </td>
+            <td>1</td>
+            <td>8,914,900</td>
+            <td>2025-02-15</td>
+            <td>접대비/현금</td>
+            <td>비정상입력시간</td>
+        </tr>
+        
+        <tr>
+            <td>JE00230</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                2
+            </td>
+            <td>1</td>
+            <td>6,693,400</td>
+            <td>2025-03-07</td>
+            <td>보통예금/복리후생비</td>
+            <td>중복전표</td>
+        </tr>
+        
+        <tr>
+            <td>JE00213</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                2
+            </td>
+            <td>1</td>
+            <td>4,720,500</td>
+            <td>2025-08-16</td>
+            <td>접대비/현금</td>
+            <td>비정상입력시간</td>
+        </tr>
+        
+        <tr>
+            <td>JE00214</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                2
+            </td>
+            <td>1</td>
+            <td>4,223,300</td>
+            <td>2025-07-26</td>
+            <td>보통예금/복리후생비</td>
+            <td>비정상입력시간</td>
+        </tr>
+        
+        <tr>
+            <td>JE00212</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                2
+            </td>
+            <td>1</td>
+            <td>1,193,400</td>
+            <td>2025-06-21</td>
+            <td>여비교통비/현금</td>
+            <td>비정상입력시간</td>
+        </tr>
+        
+        <tr>
+            <td>JE00229</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                2
+            </td>
+            <td>1</td>
+            <td>409,100</td>
+            <td>2025-06-30</td>
+            <td>보통예금/지급수수료</td>
+            <td>중복전표</td>
+        </tr>
+        
+        <tr>
+            <td>JE00226</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                1
+            </td>
+            <td>1</td>
+            <td>30,000,000</td>
+            <td>2025-03-31</td>
+            <td>보통예금/복리후생비</td>
+            <td>라운드금액</td>
+        </tr>
+        
+        <tr>
+            <td>JE00227</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                1
+            </td>
+            <td>1</td>
+            <td>30,000,000</td>
+            <td>2025-11-10</td>
+            <td>보통예금/복리후생비</td>
+            <td>라운드금액</td>
+        </tr>
+        
+        <tr>
+            <td>JE00209</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                1
+            </td>
+            <td>1</td>
+            <td>29,393,200</td>
+            <td>2025-12-09</td>
+            <td>보통예금/복리후생비</td>
+            <td>적요누락</td>
+        </tr>
+        
+        <tr>
+            <td>JE00208</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                1
+            </td>
+            <td>1</td>
+            <td>22,678,700</td>
+            <td>2025-03-31</td>
+            <td>보통예금/지급수수료</td>
+            <td>적요누락</td>
+        </tr>
+        
+        <tr>
+            <td>JE00206</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                1
+            </td>
+            <td>1</td>
+            <td>20,823,100</td>
+            <td>2025-11-03</td>
+            <td>외상매입금/현금</td>
+            <td>적요누락</td>
+        </tr>
+        
+        <tr>
+            <td>JE00228</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                1
+            </td>
+            <td>1</td>
+            <td>20,000,000</td>
+            <td>2025-06-23</td>
+            <td>여비교통비/현금</td>
+            <td>라운드금액</td>
+        </tr>
+        
+        <tr>
+            <td>JE00225</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                1
+            </td>
+            <td>1</td>
+            <td>10,000,000</td>
+            <td>2025-02-03</td>
+            <td>보통예금/복리후생비</td>
+            <td>라운드금액</td>
+        </tr>
+        
+        <tr>
+            <td>JE00207</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                1
+            </td>
+            <td>1</td>
+            <td>7,295,000</td>
+            <td>2025-05-12</td>
+            <td>외상매입금/현금</td>
+            <td>적요누락</td>
+        </tr>
+        
+        <tr>
+            <td>JE00210</td>
+            <td style="text-align:right; color: green; font-weight:bold;">
+                1
+            </td>
+            <td>1</td>
+            <td>1,082,500</td>
+            <td>2025-08-25</td>
+            <td>여비교통비/현금</td>
+            <td>적요누락</td>
+        </tr>
+        
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 감사 방법론 -->
+                <div class="section">
+                    <h2>📋 감사 방법론</h2>
+                    <p style="line-height: 1.8; color: #555;">
+                        본 리포트는 <strong>ISA 240(부정에 대한 책임)</strong>에 기반한 위험 기반 감사(Risk-Based Audit Approach)를
+                        자동화한 것입니다. 7개 탐지 규칙을 통해 다음과 같은 감사 위험을 식별합니다:
+                    </p>
+                    <ul style="margin-left: 20px; line-height: 2; color: #555;">
+                        <li><strong>고액전표</strong> (가중치 3): 과도한 규모의 거래</li>
+                        <li><strong>직무분리위반</strong> (가중치 3): 입력자와 승인자가 동일</li>
+                        <li><strong>중복전표</strong> (가중치 2): 동일 거래의 중복 기록</li>
+                        <li><strong>비정상입력시간</strong> (가중치 2): 주말/야간 입력</li>
+                        <li><strong>한도직전금액</strong> (가중치 2): 승인 한도 바로 직전</li>
+                        <li><strong>라운드금액</strong> (가중치 1): 정수 금액의 반복</li>
+                        <li><strong>적요누락</strong> (가중치 1): 거래 설명 부재</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer">
+                <div>감사인의 위험 기반 접근 방식(Risk-Based Audit)을 통해 한정된 감사 자원을 효율적으로 배분합니다.</div>
+                <div class="timestamp">리포트 생성: 2026년 07월 15일 18:31:13</div>
+            </div>
+        </div>
+    </body>
+    </html>
+    
